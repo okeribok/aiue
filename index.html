@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>💢AIUAE</title>
+<style>
+:root{--bg:#f3f5f7;--card:#fff;--ink:#16202a;--muted:#5d6b78;--line:#d8dee5;--pri:#0d6e68;--pri-soft:#e3f2f0;--warn:#9a5b00;--err:#b42318;--ok:#17703a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr) minmax(0,34vh);overflow:hidden}
+button,input,textarea,select{font:inherit}
+button{background:var(--pri);color:#fff;border:0;border-radius:6px;padding:.45rem .9rem;cursor:pointer;transition:background .15s,transform .05s}
+button:hover:not(:disabled){background:#0a5853}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button.ghost:hover:not(:disabled){background:#f0f4f6}
+input,textarea,select{border:1px solid var(--line);border-radius:6px;padding:.45rem .6rem;background:#fff;color:var(--ink)}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--pri-soft);border-color:var(--pri)}
+.muted{color:var(--muted)}.small{font-size:.8rem}
+.st-ok{color:var(--ok)}.st-busy{color:var(--warn)}.st-err{color:var(--err)}
+.top{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.6rem 1rem;background:var(--card);border-bottom:1px solid var(--line)}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:.5rem}
+.grow{flex:1;min-width:200px}
+.chip{font-size:.8rem;padding:.2rem .6rem;border-radius:999px;background:#eef1f4;color:var(--muted);border:1px solid var(--line)}
+.chip.on{background:var(--pri-soft);color:var(--pri);border-color:#b7dcd7}
+.work{display:flex;min-height:0;overflow:hidden}
+.col{display:flex;flex-direction:column;min-height:0;background:var(--card);border-right:1px solid var(--line)}
+/* Left panel (tree): resizable from its right edge */
+.col:first-child{
+  flex:0 0 auto;
+  width:300px;
+  min-width:160px;
+  max-width:50%;
+  resize:horizontal;
+  overflow:auto;
+}
+/* Centre panel grows/shrinks */
+.col:nth-child(2){
+  flex:1 1 0;
+  min-width:240px;
+  overflow:hidden;
+}
+/* Right panel (dashboard/radar): direction:rtl puts the resize handle on the LEFT edge */
+.col.dash-col{
+  flex:0 0 auto;
+  width:320px;
+  min-width:180px;
+  max-width:50%;
+  resize:horizontal;
+  overflow:auto;
+  border-right:0;
+  border-left:1px solid var(--line);
+  direction:rtl;
+}
+.col.dash-col > *{direction:ltr}
+.col-h{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.55rem 1rem;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:#fafbfc;border-bottom:1px solid var(--line)}
+.col-h button{padding:.2rem .6rem;font-size:.75rem}
+.tree{flex:1;overflow:auto;padding:.5rem}
+.tree g.node{cursor:pointer}
+.tree g.node.is-sel rect,.tree g.node.is-sel polygon{stroke:#b45309!important;stroke-width:3px!important}
+.chat-log{flex:1;overflow:auto;padding:1rem;display:flex;flex-direction:column;gap:.7rem}
+.msg{max-width:88%;padding:.6rem .85rem;border-radius:10px;white-space:pre-wrap;border:1px solid var(--line);background:#f7f8fa}
+.msg.user{align-self:flex-end;background:var(--pri-soft);border-color:#b7dcd7}
+.msg .recorded{display:block;margin-top:.35rem;font-size:.78rem;color:var(--pri)}
+.status{min-height:1.5rem;padding:.2rem 1rem;font-size:.8rem;color:var(--muted)}
+.chat-form{display:flex;gap:.5rem;padding:.6rem;border-top:1px solid var(--line)}
+.chat-form textarea{flex:1;resize:none}
+.dash{padding:.8rem 1rem;display:grid;gap:.7rem;font-size:.88rem}
+.bar{display:block;height:6px;background:#e7ebef;border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--pri);transition:width .4s}
+.bar.risk i{background:var(--warn)}
+.radar{padding:.4rem .8rem;min-height:200px}
+.radar svg{width:100%;height:auto}
+.tags{padding:.8rem 1rem;display:flex;flex-wrap:wrap;gap:.3rem .7rem;align-items:baseline;line-height:1.3}
+.branch{display:flex;flex-direction:column;min-height:0;background:var(--card);border-top:1px solid var(--line)}
+.branch-h{display:flex;justify-content:space-between;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--line);gap:1rem;flex-wrap:wrap}
+.branch-h .row{display:flex;gap:.5rem}
+.qlist{list-style:none;margin:0;padding:0;overflow:auto;flex:1}
+.q{display:flex;justify-content:space-between;gap:1rem;padding:.6rem 1rem;border-bottom:1px solid #eef1f4}
+.q:hover{background:#fafcfc}
+.q-body{min-width:0;display:grid;gap:.2rem}
+.q-id{font-family:ui-monospace,Consolas,monospace;font-size:.75rem;color:var(--muted)}
+.q-ans{font-size:.88rem;color:#334155;white-space:pre-wrap}
+.q-acts{display:flex;flex-direction:column;align-items:flex-end;gap:.4rem;flex-shrink:0}
+.q-acts button{padding:.3rem .65rem;font-size:.8rem}
+.score{display:flex;gap:.8rem;font-size:.75rem;color:var(--muted);flex-wrap:wrap}
+.score span{display:flex;align-items:center;gap:.3rem}
+.score .bar{width:64px}
+dialog{border:0;border-radius:10px;padding:0;width:min(560px,92vw);box-shadow:0 20px 50px rgba(0,0,0,.2)}
+dialog::backdrop{background:rgba(15,23,42,.35)}
+.dlg{padding:1.4rem;display:flex;flex-direction:column;gap:.8rem}
+.dlg h2{margin:0;font-size:1.15rem}
+.dlg menu{display:flex;gap:.5rem;justify-content:flex-end;margin:0;padding:0;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:.3rem;font-size:.85rem;color:var(--muted)}
+.seg{display:flex;gap:1.2rem}
+.toast{position:fixed;right:1rem;bottom:1rem;background:var(--ink);color:#fff;padding:.6rem .9rem;border-radius:8px;max-width:420px;font-size:.88rem;z-index:10;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+@media (max-width:980px){body{display:block;height:auto;overflow:auto}.work{display:block}.col,.col:first-child,.col:nth-child(2),.col.dash-col{overflow:visible;border-right:0;border-left:0;border-bottom:1px solid var(--line);width:auto!important;max-width:none;resize:none;direction:ltr;flex:none}.tree{max-height:50vh}.chat-log{min-height:50vh}.branch{height:70vh}}
+</style>
+  <meta property="og:image" content="https://bolt.new/static/og_default.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://bolt.new/static/og_default.png">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><strong>💢AI Usecase Explorer</strong><span class="small muted">Willen · Mag · Kan</span></div>
+  <input id="initiative" class="grow" placeholder="Name of this use case, e.g. Customer service automation">
+  <span id="model-chip" class="chip">No model</span>
+  <button id="btn-model" class="ghost">Model</button>
+  <button id="btn-csv" class="ghost">Framework CSV</button>
+  <button id="btn-export" class="ghost">Export JSON</button>
+  <button id="btn-import" class="ghost">Import JSON</button>
+  <input type="file" id="file-csv" accept=".csv,text/csv" hidden>
+  <input type="file" id="file-json" accept=".json,application/json" hidden>
+</header>
+
+<main class="work">
+  <aside class="col">
+    <div class="col-h">Framework <button id="sel-all" class="ghost">All questions</button></div>
+    <div id="tree" class="tree"></div>
+  </aside>
+  <section class="col">
+    <div class="col-h">Conversation</div>
+    <div id="chat-log" class="chat-log" role="log" aria-live="polite"></div>
+    <div id="status" class="status"></div>
+    <form id="chat-form" class="chat-form">
+      <textarea id="chat-input" rows="2" placeholder="Describe the use case, or answer a question..."></textarea>
+      <button id="chat-send" type="submit">Send</button>
+    </form>
+  </section>
+  <aside class="col dash-col">
+    <div class="col-h">Overview</div>
+    <div id="metrics" class="dash"></div>
+    <div class="col-h">Next best action</div>
+    <div id="next" class="dash"></div>
+    <div class="col-h">Completeness · Confidence · Residual risk</div>
+    <div id="radar" class="radar"></div>
+    <div class="col-h">Knowledge gaps</div>
+    <div id="tags" class="tags"></div>
+  </aside>
+</main>
+
+<section class="branch">
+  <div class="branch-h">
+    <div>
+      <strong id="branch-title">All questions</strong>
+      <div id="branch-path" class="small muted"></div>
+    </div>
+    <div class="row">
+      <button id="assess-branch">Assess answered</button>
+      <button id="assess-stop" class="ghost" disabled>Stop</button>
+    </div>
+  </div>
+  <ol id="branch-list" class="qlist"></ol>
+</section>
+
+<dialog id="setup">
+  <form method="dialog" class="dlg">
+    <h2>Language model</h2>
+    <p class="small muted">Run Granite 4.0 Micro in this browser with WebGPU, or connect a local OpenAI-compatible server such as LM Studio or llama.cpp.</p>
+    <div class="seg">
+      <label><input type="radio" name="backend" value="webgpu" checked> In browser (WebGPU)</label>
+      <label><input type="radio" name="backend" value="api"> API server</label>
+    </div>
+    <div id="pane-webgpu" class="dlg" style="padding:0">
+      <button type="button" id="btn-load-gpu">Load Granite 4.0 Micro</button>
+      <progress id="gpu-progress" max="100" value="0" hidden style="width:100%"></progress>
+      <p id="gpu-text" class="small muted" style="margin:0"></p>
+    </div>
+    <div id="pane-api" class="dlg" style="padding:0" hidden>
+      <label class="field">Server URL<input id="api-url" value="http://127.0.0.1:1234"></label>
+      <div><button type="button" class="ghost" id="btn-find">Find models</button></div>
+      <label class="field">Model<select id="api-model"></select></label>
+      <div><button type="button" id="btn-use-api" disabled>Use this server</button></div>
+    </div>
+    <menu><button value="cancel" class="ghost">Close</button></menu>
+  </form>
+</dialog>
+
+<dialog id="answer">
+  <form method="dialog" class="dlg">
+    <div class="small muted" id="ans-id"></div>
+    <h2 id="ans-q"></h2>
+    <p id="ans-hint" class="small muted" style="margin:0"></p>
+    <label class="field">Your answer<textarea id="ans-text" rows="5"></textarea></label>
+    <menu>
+      <button type="button" id="ans-clear" class="ghost">Clear</button>
+      <button value="cancel" class="ghost">Cancel</button>
+      <button type="button" id="ans-save">Save</button>
+    </menu>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" hidden></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+  FLOWS: every model pass of the app, written in TOON (the same syntax as the
+  AIbaarAI app). `${var}` is filled from the step results and host inputs.
+  The host code only supplies inputs and glue (see sendChat).
+════════════════════════════════════════════════════════════════════════ -->
+<script type="text/plain" id="flow-chat">
+flow: chat
+note: Chat turn. The host applies the extracted answers and picks the next question between the two passes.
+inputs[4]: question,candidates,history,next_question
+steps[2]:
+  - id: extract
+    kind: llm
+    label: Reading your message...
+    mode: complete
+    max_tokens: 260
+    temperature: 0
+    parse: json
+    on_error: fallback
+    expect[1]{field,type,allowed,fallback}:
+      answers,list,,
+    def: extract
+    system: |
+      You record answers to assessment questions. Read the user's message and find which candidate questions it answers.
+      Use ONLY ids from the candidate list. Use only facts the user stated. Do not infer and do not invent.
+      Return JSON only:
+      {"answers":[{"id":"<candidate id>","value":"<the user's answer in short words>"}]}
+      If the message answers none of the candidates, return {"answers":[]}.
+    user: |
+      Candidate questions:
+      ${candidates}
+
+      User message: ${question}
+  - id: reply
+    kind: llm
+    label: Writing reply...
+    mode: stream
+    max_tokens: 220
+    temperature: 0.3
+    def: reply
+    system: |
+      You are a calm assessment assistant for an AI use case. Reply in the same language as the user's message.
+      In at most two short sentences: confirm what was recorded (if anything), then ask the next question as a question.
+      Plain text only: no lists, no headings, no markdown.
+    user: |
+      Recorded: ${recorded}
+      Next question to ask: ${next_question}
+      Previous exchange: ${history}
+      User message: ${question}
+</script>
+
+<script type="text/plain" id="flow-assess_leaf">
+flow: assess_leaf
+note: Per-question assessment in small passes. The host computes residual risk from these scores; the model never certifies measures.
+inputs[3]: question,answer,branch
+steps[4]:
+  - id: gaps
+    kind: llm
+    label: Finding missing information...
+    mode: complete
+    max_tokens: 160
+    temperature: 0
+    parse: json
+    on_error: fallback
+    expect[1]{field,type,allowed,fallback}:
+      missing,list,,
+    def: gaps
+    system: |
+      Compare the answer with the question. List the information that is still missing for a complete answer.
+      Put the most important gap first. Use at most 4 items, each a few words.
+      Return JSON only: {"missing":["short item"]}
+    user: |
+      Question: ${question}
+      Answer: ${answer}
+  - id: score
+    kind: llm
+    label: Scoring coverage and confidence...
+    mode: complete
+    max_tokens: 120
+    temperature: 0
+    parse: json
+    on_error: fallback
+    expect[3]{field,type,allowed,fallback}:
+      coverage,num,,0
+      confidence,num,,0
+      evidence,enum,none|limited|good,limited
+    def: score
+    system: |
+      Score the answer on two separate scales from 0 to 10.
+      coverage: how completely the answer addresses the question. Missing critical information must lower it.
+      confidence: how specific, consistent and evidenced the answer is. Do not confuse coverage with confidence.
+      evidence: none, limited or good.
+      Return JSON only: {"coverage":0,"confidence":0,"evidence":"limited"}
+    user: |
+      Question: ${question}
+      Answer: ${answer}
+      Missing information: ${gaps}
+  - id: measures
+    kind: llm
+    label: Assessing measures...
+    mode: complete
+    max_tokens: 140
+    temperature: 0
+    parse: json
+    on_error: fallback
+    expect[3]{field,type,allowed,fallback}:
+      inherent,num,,5
+      measure_status,enum,unknown|plausible|supported,unknown
+      known_measures,list,,
+    def: measures
+    system: |
+      Rate the inherent risk of the situation behind the question from 0 to 10 (10 = severe harm if it goes wrong).
+      List the measures that the answer describes in known_measures.
+      measure_status: unknown if no measure is described, plausible if a measure is relevant but not substantiated, supported only if the answer gives evidence that it works.
+      Never certify adequacy.
+      Return JSON only: {"inherent":5,"measure_status":"unknown","known_measures":[]}
+    user: |
+      Question: ${question}
+      Answer: ${answer}
+  - id: follow_up
+    kind: llm
+    label: Choosing the next question...
+    mode: complete
+    max_tokens: 60
+    temperature: 0.2
+    def: follow_up
+    system: |
+      Write ONE short question that would close the most important gap in the answer. Reply in the language of the answer.
+      Plain text, one sentence, no lists.
+    user: |
+      Question: ${question}
+      Answer: ${answer}
+      Missing information: ${gaps}
+</script>
+
+<script>
+/* ═════════════════════════════════════════════════════════════════════════
+ * AI Usecase Explorer, single file.
+ * Modules: Toon (parser, copied from AIbaarAI) · Flow (runner) · LLM (WebGPU
+ * Granite or OpenAI-compatible API) · Framework (CSV, validation, tree) ·
+ * Scoring (deterministic aggregation) · Assessment (queue) · Chat · Views ·
+ * Persistence (localStorage + JSON) · Init.
+ * ═════════════════════════════════════════════════════════════════════════ */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const now = () => new Date().toISOString();
+const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+const round1 = x => Math.round(x * 10) / 10;
+
+const STORAGE_KEY = 'ai-usecase-explorer.v1';
+const FORMAT = 'ai-usecase-assessment';
+const DEFAULT_CSV = 'data/usecase_vragenboom_kan_mag_wil_v2.csv';
+const REQUIRED_COLS = ['id', 'parent_id', 'niveau', 'vraag'];
+const GRANITE_ID = 'onnx-community/granite-4.0-micro-ONNX-web';
+const TJS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
+const MERMAID_URL = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+const TREE_LEVEL = 3;
+const CANDIDATES = 14;
+const SAVE_DELAY = 500;
+const MEASURE_BONUS = { unknown: 0, plausible: 0.1, supported: 0.2 };
+const LEVER_LABEL = { coverage: 'Increase coverage', confidence: 'Improve confidence', measures: 'Improve measures' };
+const LEVER_HINT = {
+  coverage: 'Answer the open questions first. Unanswered questions carry the most unmanaged risk.',
+  confidence: 'Make vague answers specific and back them with evidence.',
+  measures: 'Describe which measures are in place and what shows that they work.',
+};
+
+class StopError extends Error {}
+
+// ── TOON reader (identical to AIbaarAI) ────────────────────────────────────────
+const Toon = {
+  KEY: /^([A-Za-z_][\w.\-]*)(?:\[(\d*)(\|)?\])?(?:\{([^}]*)\})?:(?:\s+(.*))?$/,
+
+  scalar(s) {
+    s = s.trim();
+    if (s === '') return '';
+    if (s[0] === '"') { try { return JSON.parse(s); } catch { return s.slice(1, -1); } }
+    if (s === 'true') return true;
+    if (s === 'false') return false;
+    if (s === 'null') return null;
+    if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+    return s;
+  },
+
+  split(s, delim) {
+    const out = []; let cur = '', q = false;
+    for (let k = 0; k < s.length; k++) {
+      const ch = s[k];
+      if (ch === '"' && s[k - 1] !== '\\') { q = !q; cur += ch; }
+      else if (ch === delim && !q) { out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  },
+
+  parse(src) {
+    const lines = src.replace(/\t/g, '  ').split('\n').map(raw => {
+      const r = raw.replace(/\s+$/, ''), t = r.trimStart();
+      return { indent: r.length - t.length, text: t, raw: r };
+    });
+    let i = 0;
+    const fail = msg => { throw new Error('TOON regel ' + (i + 1) + ': ' + msg); };
+    const skipBlank = () => { while (i < lines.length && lines[i].text === '') i++; };
+    const isItem = L => L.text === '-' || L.text.startsWith('- ');
+
+    const blockText = parentIndent => {
+      const out = []; let bi = null;
+      while (i < lines.length) {
+        const L = lines[i];
+        if (L.text === '') { out.push(''); i++; continue; }
+        if (L.indent <= parentIndent) break;
+        if (bi === null) bi = L.indent;
+        out.push(L.raw.slice(Math.min(bi, L.indent)));
+        i++;
+      }
+      while (out.length && out[out.length - 1] === '') out.pop();
+      return out.join('\n');
+    };
+
+    const parseNested = indent => {
+      skipBlank();
+      if (i >= lines.length || lines[i].indent <= indent) return null;
+      return isItem(lines[i]) ? parseList(lines[i].indent) : parseObject(lines[i].indent);
+    };
+
+    const parseList = indent => {
+      const arr = [];
+      for (;;) {
+        skipBlank();
+        if (i >= lines.length) break;
+        const L = lines[i];
+        if (L.indent < indent) break;
+        if (L.indent > indent || !isItem(L)) { if (L.indent === indent) break; fail('onverwachte inspringing'); }
+        const rest = L.text === '-' ? '' : L.text.slice(2);
+        if (rest === '') { i++; arr.push(parseNested(indent)); }
+        else if (Toon.KEY.test(rest)) {
+          lines[i] = { indent: indent + 2, text: rest, raw: ' '.repeat(indent + 2) + rest };
+          arr.push(parseObject(indent + 2));
+        } else { i++; arr.push(Toon.scalar(rest)); }
+      }
+      return arr;
+    };
+
+    const parseObject = indent => {
+      const obj = {};
+      for (;;) {
+        skipBlank();
+        if (i >= lines.length) break;
+        const L = lines[i];
+        if (L.indent < indent) break;
+        if (L.indent > indent) fail('onverwachte inspringing bij "' + L.text + '"');
+        const m = L.text.match(Toon.KEY);
+        if (!m) fail('geen "sleutel: waarde" — "' + L.text + '"');
+        i++;
+        const [, key, n, pipe, fields, rest = ''] = m;
+        const isArr = L.text.slice(key.length).startsWith('[');
+        const delim = pipe ? '|' : ',';
+        if (fields !== undefined) {
+          const cols = fields.split(',').map(s => s.trim());
+          const rows = [];
+          while (i < lines.length && (lines[i].text === '' || lines[i].indent > indent)) {
+            if (lines[i].text !== '') rows.push(Object.fromEntries(
+              Toon.split(lines[i].text, delim).map((c, k) => [cols[k], Toon.scalar(c)])));
+            i++;
+          }
+          obj[key] = rows;
+        } else if (isArr) {
+          obj[key] = rest !== '' ? Toon.split(rest, delim).map(Toon.scalar)
+                                 : (parseNested(indent) || []);
+        } else if (rest === '|') obj[key] = blockText(indent);
+        else if (rest === '') obj[key] = parseNested(indent) ?? '';
+        else obj[key] = Toon.scalar(rest);
+        if (isArr && n !== '' && n !== undefined && obj[key].length !== Number(n))
+          fail('"' + key + '" meldt ' + n + ' items maar bevat er ' + obj[key].length);
+      }
+      return obj;
+    };
+
+    const root = parseObject(0);
+    skipBlank();
+    if (i < lines.length) fail('onverwachte inspringing bij "' + lines[i].text + '"');
+    return root;
+  },
+};
+
+// ── Flow runner ───────────────────────────────────────────────────────────────
+const Flow = {
+  _flows: {},
+
+  load(name) {
+    if (!this._flows[name]) {
+      const el = document.getElementById('flow-' + name);
+      if (!el) throw new Error('Flow "' + name + '" niet gevonden');
+      this._flows[name] = Toon.parse(el.textContent);
+    }
+    return this._flows[name];
+  },
+
+  lookup(V, path) { return String(path).split('.').reduce((o, k) => (o == null ? undefined : o[k]), V); },
+
+  str(v) {
+    if (v == null) return '';
+    if (Array.isArray(v)) return v.join('; ');
+    return typeof v === 'object' ? JSON.stringify(v) : String(v);
+  },
+
+  interp(tpl, V) {
+    return tpl == null ? '' : String(tpl).replace(/\$\{([\w.]+)\}/g, (_, p) => this.str(this.lookup(V, p)));
+  },
+
+  /** hooks: status(label) · before(step,V) · after(step,V) · token(stepId,text) */
+  async run(name, input, hooks = {}) {
+    const flow = this.load(name);
+    const V = { ...input };
+    for (const step of flow.steps) {
+      if (hooks.before) await hooks.before(step, V);
+      if (step.label && hooks.status) hooks.status(step.label);
+      if (step.kind === 'set') V[step.def] = this.interp(step.value, V);
+      else if (step.kind === 'llm') await this._llm(step, V, hooks);
+      else throw new Error('Flow "' + name + '": onbekend stap-type "' + step.kind + '"');
+      if (hooks.after) await hooks.after(step, V);
+    }
+    return V;
+  },
+
+  async _llm(step, V, hooks) {
+    const messages = [
+      { role: 'system', content: this.interp(step.system, V) },
+      { role: 'user', content: this.interp(step.user, V) },
+    ];
+    let raw = '';
+    try {
+      raw = await LLM.infer(messages, {
+        max_tokens: Number(step.max_tokens) || 300,
+        temperature: Number(step.temperature) || 0,
+        onToken: step.mode === 'stream' && hooks.token ? t => hooks.token(step.id, t) : null,
+      });
+    } catch (e) {
+      if (step.on_error !== 'fallback') throw e;
+      console.warn('[' + step.id + ']', e);
+    }
+    V[step.def] = step.parse === 'json' ? this._expect(step, parseJSON(raw)) : String(raw).trim();
+  },
+
+  _expect(step, obj) {
+    obj = obj && typeof obj === 'object' ? obj : {};
+    const out = {};
+    for (const r of step.expect || []) {
+      let v = obj[r.field];
+      if (r.type === 'list') v = Array.isArray(v) ? v : [];
+      else if (r.type === 'num') { const n = Number(v); v = Number.isFinite(n) ? clamp(n, 0, 10) : Number(r.fallback); }
+      else if (r.type === 'enum') v = String(r.allowed).split('|').includes(v) ? v : r.fallback;
+      else v = typeof v === 'string' && v.trim() ? v.trim() : r.fallback;
+      out[r.field] = v;
+    }
+    return out;
+  },
+};
+
+function parseJSON(raw) {
+  const s = String(raw || ''), a = s.indexOf('{'), b = s.lastIndexOf('}');
+  if (a < 0 || b < a) return null;
+  try { return JSON.parse(s.slice(a, b + 1)); } catch { return null; }
+}
+
+// ── LLM: WebGPU Granite or OpenAI-compatible API; one inference at a time ─────
+const LLM = {
+  kind: null, url: '', model: '', pipe: null, TextStreamer: null,
+  _queue: Promise.resolve(),
+
+  infer(messages, opts) {
+    const job = () => (this.kind === 'webgpu' ? this._webgpu(messages, opts) : this._api(messages, opts));
+    const p = this._queue.then(job);
+    this._queue = p.catch(() => {});
+    return p;
+  },
+
+  async _api(messages, { max_tokens, temperature, onToken }) {
+    const res = await fetch(this.url + '/v1/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: this.model, messages, temperature, max_tokens, stream: !!onToken }),
+    });
+    if (!res.ok) throw new Error('The model server answered HTTP ' + res.status);
+    if (!onToken) return (await res.json()).choices?.[0]?.message?.content ?? '';
+
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    let buf = '', full = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trim();
+        if (payload === '[DONE]') return full;
+        try {
+          const delta = JSON.parse(payload).choices?.[0]?.delta?.content;
+          if (delta) { full += delta; onToken(delta); }
+        } catch { /* ignore keep-alive fragments */ }
+      }
+    }
+    return full;
+  },
+
+  async _webgpu(messages, { max_tokens, temperature, onToken }) {
+    const streamer = onToken
+      ? new this.TextStreamer(this.pipe.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: onToken })
+      : undefined;
+    const out = await this.pipe(messages, {
+      max_new_tokens: max_tokens, do_sample: temperature > 0, temperature: temperature > 0 ? temperature : undefined, streamer,
+    });
+    const gen = out[0].generated_text;
+    return Array.isArray(gen) ? (gen.at(-1).content ?? '') : String(gen);
+  },
+};
+
+async function connectWebGPU(onProgress) {
+  if (!navigator.gpu) throw new Error('WebGPU is not available in this browser. Use a recent Chrome or Edge, or choose an API server.');
+  const tjs = await import(TJS_URL);
+  const pipe = await tjs.pipeline('text-generation', GRANITE_ID, {
+    device: 'webgpu',
+    progress_callback: p => { if (p.status === 'progress') onProgress(p.progress || 0, p.file); },
+  });
+  Object.assign(LLM, { kind: 'webgpu', pipe, TextStreamer: tjs.TextStreamer, model: GRANITE_ID, url: '' });
+}
+
+async function listModels(url) {
+  const res = await fetch(url + '/v1/models');
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return ((await res.json()).data || []).map(m => m.id);
+}
+
+// ── State and persistence ─────────────────────────────────────────────────────
+const S = {
+  rows: [], checksum: '', answers: {}, assessments: {}, chat: [], selected: 'ALL',
+  initiative: { name: '', description: '', created_at: '' },
+  settings: { backend: '', url: '', model: '' }, epoch: 0,
+};
+let fw = null;          // derived framework (see buildFramework)
+let busy = false;       // a chat turn is running
+let editing = null;     // leaf id open in the answer dialog
+let saveTimer = null;
+
+function persist() {
+  const { rows, checksum, answers, assessments, chat, selected, initiative, settings } = S;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows, checksum, answers, assessments, chat, selected, initiative, settings })); }
+  catch { toast('Browser storage is full. Export JSON to keep your work.'); }
+}
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(persist, SAVE_DELAY); }
+function restore() {
+  try { Object.assign(S, JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {}); } catch { /* start fresh */ }
+}
+
+// ── Framework: CSV → validated tree ───────────────────────────────────────────
+function parseCSV(raw) {
+  const text = raw.replace(/^\uFEFF/, '');
+  const delim = text.split('\n', 1)[0].includes(';') ? ';' : ',';
+  const grid = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === delim) { row.push(cell); cell = ''; }
+    else if (c === '\n') { row.push(cell); grid.push(row); row = []; cell = ''; }
+    else if (c !== '\r') cell += c;
+  }
+  if (cell || row.length) { row.push(cell); grid.push(row); }
+  const lines = grid.filter(r => r.some(c => c.trim()));
+  if (!lines.length) return { cols: [], rows: [] };
+  const cols = lines[0].map(c => c.trim());
+  const rows = lines.slice(1).map(r => Object.fromEntries(cols.map((c, k) => [c, (r[k] ?? '').trim()])));
+  return { cols, rows };
+}
+
+function buildFramework(rows) {
+  const errors = [], nodes = {}, order = [];
+  rows.forEach((r, i) => {
+    const id = r.id;
+    if (!id) { errors.push(`Row ${i + 2} has no id.`); return; }
+    if (nodes[id]) { errors.push(`Duplicate id "${id}".`); return; }
+    nodes[id] = {
+      id, parent: r.parent_id || '', level: Number(r.niveau) || 0, domein: r.domein || '', kant: r.kant || '',
+      aspect: r.as || '', vraag: r.vraag || '', doorvraag: r.doorvraag_bij_vaagheid || '',
+      blokkade: r.blokkade_signaal || '', tags: (r.tags || '').split(/\s+/).filter(Boolean), children: [],
+    };
+    order.push(id);
+  });
+  for (const id of order) {
+    const p = nodes[id].parent;
+    if (!p) continue;
+    if (!nodes[p]) errors.push(`"${id}" points to unknown parent "${p}".`);
+    else nodes[p].children.push(id);
+  }
+  for (const id of order) {
+    const seen = new Set(); let cur = id;
+    while (cur && nodes[cur]) {
+      if (seen.has(cur)) { errors.push(`Cycle in the hierarchy at "${id}".`); break; }
+      seen.add(cur); cur = nodes[cur].parent;
+    }
+  }
+  const warnings = order.filter(id => !nodes[id].parent && nodes[id].level > 1)
+    .map(id => `"${id}" has no parent but is level ${nodes[id].level}.`);
+  return {
+    nodes, order, errors, warnings,
+    roots: order.filter(id => !nodes[id].parent),
+    leaves: order.filter(id => nodes[id].children.length === 0),
+  };
+}
+
+function leavesUnder(id) {
+  if (id === 'ALL') return fw.leaves;
+  const n = fw.nodes[id];
+  if (!n) return [];
+  return n.children.length ? n.children.flatMap(leavesUnder) : [id];
+}
+
+function titleOf(n) {
+  const t = n.level === 1 ? n.domein : n.level === 2 ? `${n.domein} · ${n.kant}` : (n.aspect || n.domein);
+  return String(t || n.id).slice(0, 48);
+}
+
+function pathOf(id) {
+  const out = []; let cur = id;
+  while (cur && fw.nodes[cur]) { out.unshift(cur); cur = fw.nodes[cur].parent; }
+  return out.join(' › ');
+}
+
+async function sha256(text) {
+  if (!crypto.subtle) return '';
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return 'sha256:' + [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function applyFramework(rows, source) {
+  const built = buildFramework(rows);
+  if (built.errors.length) { toast(`${source} was not loaded: ${built.errors.length} problem(s). First: ${built.errors[0]}`); return false; }
+  const orphaned = Object.keys(S.answers).filter(id => !built.nodes[id]);
+  fw = built;
+  S.rows = rows;
+  S.checksum = await sha256(JSON.stringify(rows));
+  if (S.selected !== 'ALL' && !fw.nodes[S.selected]) S.selected = 'ALL';
+  save();
+  renderTree();
+  renderAll();
+  const extra = orphaned.length ? ` ${orphaned.length} saved answer(s) belong to IDs that are not in this framework; they are kept.` : '';
+  const warn = built.warnings.length ? ` Warning: ${built.warnings[0]}` : '';
+  toast(`${source} loaded: ${built.leaves.length} questions.${extra}${warn}`);
+  return true;
+}
+
+async function importCSV(file) {
+  const { cols, rows } = parseCSV(await file.text());
+  const missing = REQUIRED_COLS.filter(c => !cols.includes(c));
+  if (missing.length) return toast(`The CSV is missing column(s): ${missing.join(', ')}`);
+  await applyFramework(rows, file.name);
+}
+
+// ── Tree (Mermaid flowchart, static layout; click selects a branch) ───────────
+let mermaidApi;          // undefined = loading, null = failed
+let treeIdByKey = new Map();
+let diagramSeq = 0;
+
+async function loadMermaid() {
+  try {
+    const m = (await import(MERMAID_URL)).default;
+    m.initialize({
+      startOnLoad: false, theme: 'base', securityLevel: 'strict',
+      themeVariables: { primaryColor: '#e3f2f0', primaryBorderColor: '#0d6e68', lineColor: '#64748b', fontSize: '14px' },
+      flowchart: { useMaxWidth: false, htmlLabels: true },
+    });
+    mermaidApi = m;
+  } catch (e) { console.warn('Mermaid could not load', e); mermaidApi = null; }
+}
+
+const mmText = s => String(s).replace(/#/g, '#35;').replace(/"/g, '#quot;').replace(/</g, '#lt;').replace(/>/g, '#gt;');
+
+async function renderTree() {
+  const box = $('tree');
+  if (mermaidApi === null) { box.textContent = 'The tree needs Mermaid, which could not be loaded.'; return; }
+  if (!fw || !mermaidApi) return;
+  const ids = fw.order.filter(id => fw.nodes[id].level <= TREE_LEVEL);
+  const keyOf = new Map(ids.map((id, i) => [id, 'n' + i]));
+  treeIdByKey = new Map(ids.map(id => [keyOf.get(id), id]));
+  let code = 'flowchart LR\n';
+  for (const id of ids) {
+    const n = fw.nodes[id];
+    code += `  ${keyOf.get(id)}["${mmText(id)}<br/>${mmText(titleOf(n))}"]\n`;
+  }
+  for (const id of ids) {
+    const p = fw.nodes[id].parent;
+    if (keyOf.has(p)) code += `  ${keyOf.get(p)} --> ${keyOf.get(id)}\n`;
+  }
+  code += '  classDef l1 fill:#0d6e68,stroke:#0d6e68,color:#fff\n';
+  code += '  classDef l2 fill:#e3f2f0,stroke:#0d6e68,color:#16202a\n';
+  code += '  classDef l3 fill:#ffffff,stroke:#9aa7b3,color:#16202a\n';
+  for (const level of [1, 2, 3]) {
+    const keys = ids.filter(id => fw.nodes[id].level === level).map(id => keyOf.get(id));
+    if (keys.length) code += `  class ${keys.join(',')} l${level}\n`;
+  }
+  try {
+    const { svg } = await mermaidApi.render('tree' + (++diagramSeq), code);
+    box.innerHTML = svg;
+    markSelected();
+  } catch (e) { console.error(e); box.textContent = 'The tree could not be drawn.'; }
+}
+
+function markSelected() {
+  document.querySelectorAll('#tree g.node').forEach(g => {
+    const m = /flowchart-(n\d+)-/.exec(g.id);
+    g.classList.toggle('is-sel', !!m && treeIdByKey.get(m[1]) === S.selected);
+  });
+}
+
+function select(id) {
+  S.selected = id;
+  save();
+  markSelected();
+  renderBranch();
+  renderChatScope();
+}
+
+// ── Scoring: deterministic aggregation of per-question LLM scores ─────────────
+function residual(inh, cov, conf, status) {
+  const r = inh * (1 - 0.5 * cov / 10 - 0.3 * conf / 10 - (MEASURE_BONUS[status] ?? 0));
+  return round1(clamp(r, 0, 10));
+}
+
+function leafMetrics(id) {
+  const answered = !!S.answers[id]?.value, s = S.assessments[id];
+  const ok = answered && !!s?.assessed;
+  return {
+    answered, assessed: ok,
+    cov: ok ? s.coverage : 0,
+    conf: ok ? s.confidence : 0,
+    inh: ok ? s.inherent : 10,
+    status: ok ? s.measure_status : 'unknown',
+    // Unanswered / unassessed → full residual risk (10/10); risk only decreases with coverage, confidence and measures
+    residual: ok ? s.residual : residual(10, 0, 0, 'unknown'),
+  };
+}
+
+function summarize(ids) {
+  const m = ids.map(leafMetrics);
+  return {
+    n: ids.length,
+    answered: m.filter(x => x.answered).length,
+    assessed: m.filter(x => x.assessed).length,
+    completeness: avg(m.map(x => x.cov)) * 10,
+    confidence: avg(m.map(x => x.conf)) * 10,
+    residual: avg(m.map(x => x.residual)),
+  };
+}
+
+/** Which lever would reduce residual risk most across these questions. */
+function nextAction(ids) {
+  const levers = { coverage: { total: 0, best: null, bestV: -1 }, confidence: { total: 0, best: null, bestV: -1 }, measures: { total: 0, best: null, bestV: -1 } };
+  for (const id of ids) {
+    const m = leafMetrics(id);
+    const v = {
+      coverage: m.inh * 0.5 * (10 - m.cov) / 10,
+      confidence: m.inh * 0.3 * (10 - m.conf) / 10,
+      measures: m.inh * (0.2 - (MEASURE_BONUS[m.status] ?? 0)),
+    };
+    for (const k of Object.keys(v)) {
+      levers[k].total += v[k];
+      if (v[k] > levers[k].bestV) { levers[k].bestV = v[k]; levers[k].best = id; }
+    }
+  }
+  const [lever, info] = Object.entries(levers).sort((a, b) => b[1].total - a[1].total)[0];
+  return { lever, info };
+}
+
+function tagWeights() {
+  const w = {};
+  for (const id of fw.leaves) {
+    const r = leafMetrics(id).residual;
+    for (const t of fw.nodes[id].tags) w[t] = (w[t] || 0) + r;
+  }
+  return Object.entries(w).sort((a, b) => b[1] - a[1]).slice(0, 40);
+}
+
+// ── Assessment queue (one leaf at a time; stop = bump epoch) ──────────────────
+const queue = [];
+let draining = false;
+
+function markDirty(id) { S.assessments[id] = { ...S.assessments[id], status: 'dirty' }; }
+
+function enqueueAssess(ids) {
+  if (!LLM.kind) return toast('Connect a model first (Model button) to assess answers.');
+  const todo = ids.filter(id => S.answers[id]?.value);
+  if (!todo.length) return toast('Nothing to assess here yet. Answer some questions first.');
+  for (const id of todo) {
+    markDirty(id);
+    if (!queue.some(j => j.id === id)) queue.push({ id, epoch: S.epoch });
+  }
+  save();
+  renderAll();
+  drain();
+}
+
+async function drain() {
+  if (draining) return;
+  draining = true;
+  renderAll();
+  try {
+    while (queue.length) {
+      const job = queue.shift();
+      if (job.epoch !== S.epoch) continue;
+      await assessLeaf(job.id, job.epoch);
+      renderAll();
+    }
+  } finally {
+    draining = false;
+    setStatus('');
+    renderAll();
+  }
+}
+
+async function assessLeaf(id, epoch) {
+  const answer = S.answers[id]?.value;
+  if (!answer) return;
+  S.assessments[id] = { ...S.assessments[id], status: 'assessing' };
+  renderBranch();
+  try {
+    const V = await Flow.run('assess_leaf', { question: fw.nodes[id].vraag, answer, branch: pathOf(id) }, {
+      status: l => setStatus(`${id}: ${l}`),
+      before: () => { if (epoch !== S.epoch) throw new StopError(); },
+      after: () => save(),
+    });
+    const cov = V.score.coverage, conf = V.score.confidence;
+    const inh = V.measures.inherent, st = V.measures.measure_status;
+    S.assessments[id] = {
+      status: 'clean', assessed: true, coverage: cov, confidence: conf, evidence: V.score.evidence,
+      inherent: inh, measure_status: st, known_measures: strList(V.measures.known_measures),
+      missing: strList(V.gaps.missing), follow_up: String(V.follow_up || '').trim().slice(0, 240),
+      residual: residual(inh, cov, conf, st), updated_at: now(),
+    };
+  } catch (e) {
+    if (e instanceof StopError) S.assessments[id] = { ...S.assessments[id], status: 'dirty' };
+    else {
+      console.error(e);
+      S.assessments[id] = { ...S.assessments[id], status: 'error', error: e.message };
+    }
+  }
+  save();
+  renderBranch();
+  renderDashboard();
+}
+
+function strList(a) {
+  return (Array.isArray(a) ? a : [])
+    .map(x => typeof x === 'string' ? x : (x && typeof x === 'object' ? Object.values(x).join(' ') : String(x)))
+    .filter(Boolean).slice(0, 6);
+}
+
+function statusOf(id) {
+  if (!S.answers[id]?.value) return { label: 'Not answered', cls: 'muted' };
+  return ({
+    clean: { label: 'Assessed', cls: 'st-ok' },
+    assessing: { label: 'Assessing…', cls: 'st-busy' },
+    error: { label: 'Assessment failed', cls: 'st-err' },
+  })[S.assessments[id]?.status] || { label: 'Needs assessment', cls: 'st-busy' };
+}
+
+// ── Chat turn ─────────────────────────────────────────────────────────────────
+function candidateQuestions(text) {
+  const words = new Set(text.toLowerCase().match(/[\p{L}\d]{4,}/gu) || []);
+  const scored = fw.leaves.map(id => {
+    const n = fw.nodes[id];
+    const hay = `${n.vraag} ${n.domein} ${n.aspect} ${n.tags.join(' ')}`.toLowerCase();
+    let s = 0;
+    words.forEach(w => { if (hay.includes(w)) s++; });
+    return { id, s };
+  }).filter(x => x.s > 0).sort((a, b) => b.s - a.s).slice(0, CANDIDATES).map(x => x.id);
+  for (const id of leavesUnder(S.selected)) {
+    if (scored.length >= CANDIDATES) break;
+    if (!scored.includes(id)) scored.push(id);
+  }
+  return scored;
+}
+
+function applyAnswers(list, allowed) {
+  const recorded = [];
+  for (const a of Array.isArray(list) ? list : []) {
+    const id = String(a?.id ?? '').trim(), value = String(a?.value ?? '').trim().slice(0, 600);
+    if (!value || !allowed.includes(id)) continue;
+    const old = S.answers[id]?.value || '';
+    if (old.includes(value)) continue;
+    S.answers[id] = { value: old ? old + '\n' + value : value, source: 'chat', updated_at: now() };
+    markDirty(id);
+    recorded.push(id);
+  }
+  return recorded;
+}
+
+function nextQuestionText(exclude) {
+  const ids = leavesUnder(S.selected).filter(id => !exclude.includes(id));
+  if (!ids.length) return 'none, every question in this branch is answered';
+  const best = ids.map(id => ({ id, r: leafMetrics(id).residual })).sort((a, b) => b.r - a.r)[0].id;
+  const fu = S.assessments[best]?.follow_up;
+  return S.answers[best]?.value && fu ? fu : fw.nodes[best].vraag;
+}
+
+async function sendChat(text) {
+  if (!LLM.kind) { toast('Connect a model first.'); return $('setup').showModal(); }
+  S.chat.push({ role: 'user', text });
+  save();
+  addMsg('user', text);
+  const cands = candidateQuestions(text);
+  const history = S.chat.slice(-5, -1).map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`).join('\n').slice(-600);
+  let bubble = null, recorded = [];
+  try {
+    const V = await Flow.run('chat', {
+      question: text,
+      candidates: cands.map(id => `${id}: ${fw.nodes[id].vraag}`).join('\n') || '(none)',
+      history,
+    }, {
+      status: l => setStatus(l),
+      before: (step, V) => {
+        if (step.id !== 'reply') return;
+        recorded = applyAnswers(V.extract.answers, cands);
+        V.recorded = recorded.length ? recorded.map(id => `${id}: ${S.answers[id].value}`).join('; ') : 'nothing new';
+        V.next_question = nextQuestionText(recorded);
+        renderBranch();
+        renderDashboard();
+      },
+      token: (_, t) => { if (!bubble) bubble = addMsg('bot', ''); bubble.firstChild.nodeValue += t; scrollChat(); },
+    });
+    const reply = String(V.reply || '').trim() || 'Thank you. Could you tell me more about the use case?';
+    if (!bubble) bubble = addMsg('bot', '');
+    bubble.firstChild ? (bubble.firstChild.nodeValue = reply) : bubble.prepend(reply);
+    if (recorded.length) bubble.append(recordedTag(recorded));
+    S.chat.push({ role: 'bot', text: reply, recorded });
+    save();
+    enqueueAssess(recorded);
+  } catch (e) {
+    console.error(e);
+    S.chat.push({ role: 'bot', text: 'The model could not answer: ' + e.message, recorded: [] });
+    addMsg('bot', S.chat.at(-1).text);
+    save();
+  } finally {
+    setStatus('');
+    renderAll();
+  }
+}
+
+function recordedTag(ids) {
+  const r = document.createElement('span');
+  r.className = 'recorded';
+  r.textContent = 'Recorded: ' + ids.join(', ');
+  return r;
+}
+
+function addMsg(role, text, recorded = []) {
+  const el = document.createElement('div');
+  el.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+  el.textContent = text;
+  if (recorded.length) el.append(recordedTag(recorded));
+  $('chat-log').append(el);
+  scrollChat();
+  return el;
+}
+
+function renderChat() {
+  $('chat-log').innerHTML = '';
+  if (!S.chat.length) {
+    addMsg('bot', 'Describe the AI use case in your own words. I record what you tell me against the framework questions and ask about the most important gap next. You can also answer any question directly from the list below.');
+  }
+  S.chat.forEach(m => addMsg(m.role === 'user' ? 'user' : 'bot', m.text, m.recorded || []));
+}
+
+function renderChatScope() {
+  $('chat-input').placeholder = S.selected === 'ALL'
+    ? 'Describe the use case, or answer a question...'
+    : `Talking about ${S.selected}. Describe the use case, or answer a question...`;
+}
+
+function scrollChat() { const log = $('chat-log'); log.scrollTop = log.scrollHeight; }
+function setStatus(text) { $('status').textContent = text; }
+
+// ── Views ─────────────────────────────────────────────────────────────────────
+function renderAll() {
+  if (!fw) return;
+  markSelected();
+  renderBranch();
+  renderDashboard();
+  $('assess-stop').disabled = !draining;
+  const chip = $('model-chip');
+  chip.textContent = LLM.kind === 'webgpu' ? 'Granite 4.0 Micro · WebGPU' : LLM.kind === 'api' ? 'API · ' + LLM.model : 'No model';
+  chip.classList.toggle('on', !!LLM.kind);
+}
+
+function qHTML(id) {
+  const n = fw.nodes[id], a = S.answers[id], s = S.assessments[id] || {};
+  const st = statusOf(id), m = leafMetrics(id);
+  const ans = a?.value ? `<div class="q-ans">${esc(a.value)}</div>` : '';
+  const next = a?.value && s.follow_up ? `<div class="small st-ok">Next: ${esc(s.follow_up)}</div>` : '';
+  const err = s.status === 'error' ? `<div class="small st-err">${esc(s.error || 'Unknown error')}</div>` : '';
+  const scores = m.assessed ? `<div class="score">
+      <span>Coverage <i class="bar"><i style="width:${m.cov * 10}%"></i></i> ${m.cov}/10</span>
+      <span>Confidence <i class="bar"><i style="width:${m.conf * 10}%"></i></i> ${m.conf}/10</span>
+      <span>Residual <i class="bar risk"><i style="width:${m.residual * 10}%"></i></i> ${m.residual}/10</span>
+      <span>Measures: ${esc(m.status)}</span></div>` : '';
+  return `<li class="q" data-id="${esc(id)}">
+    <div class="q-body">
+      <div class="q-id">${esc(id)} · ${esc(n.aspect || n.domein)}</div>
+      <div>${esc(n.vraag)}</div>${ans}${next}${err}${scores}
+    </div>
+    <div class="q-acts">
+      <span class="small ${st.cls}">${st.label}</span>
+      <button class="ghost" data-act="answer">${a?.value ? 'Edit' : 'Answer'}</button>
+      ${a?.value ? '<button class="ghost" data-act="assess">Assess</button>' : ''}
+    </div>
+  </li>`;
+}
+
+function renderBranch() {
+  if (!fw) return;
+  const ids = leavesUnder(S.selected);
+  const sum = summarize(ids);
+  $('branch-title').textContent = S.selected === 'ALL' ? 'All questions' : `${S.selected} · ${titleOf(fw.nodes[S.selected])}`;
+  $('branch-path').textContent = `${pathOf(S.selected) || 'Whole framework'} — ${sum.answered}/${sum.n} answered · ${sum.assessed} assessed · completeness ${Math.round(sum.completeness)}% · residual ${round1(sum.residual)}/10`;
+  $('branch-list').innerHTML = ids.map(qHTML).join('') || '<li class="q muted">No questions here.</li>';
+}
+
+function bar(label, pct, text, cls = '') {
+  return `<div><div class="small muted">${label} · ${text}</div><span class="bar ${cls}"><i style="width:${clamp(pct, 0, 100)}%"></i></span></div>`;
+}
+
+let radarSeq = 0, radarTimer = null;
+
+function renderDashboard() {
+  if (!fw) return;
+  const s = summarize(fw.leaves);
+  $('metrics').innerHTML = `
+    <div>Answered <strong>${s.answered}</strong> of ${s.n} · assessed <strong>${s.assessed}</strong></div>
+    ${bar('Completeness', s.completeness, Math.round(s.completeness) + '%')}
+    ${bar('Confidence', s.confidence, Math.round(s.confidence) + '%')}
+    ${bar('Residual risk', s.residual * 10, round1(s.residual) + '/10', 'risk')}`;
+  const act = nextAction(fw.leaves), best = act.info.best;
+  $('next').innerHTML = `<strong>${LEVER_LABEL[act.lever]}</strong><div class="muted">${LEVER_HINT[act.lever]}</div>
+    <div class="small">Start with: <em>${esc(fw.nodes[best].vraag)}</em> <span class="muted">(${esc(best)})</span></div>`;
+  const tags = tagWeights(), max = tags[0]?.[1] || 1;
+  $('tags').innerHTML = tags.map(([t, w]) =>
+    `<span title="${esc(t)}: ${round1(w)} residual points" style="font-size:${(0.75 + 0.9 * w / max).toFixed(2)}rem">${esc(t)}</span>`
+  ).join('') || '<span class="muted">No tags.</span>';
+  clearTimeout(radarTimer);
+  radarTimer = setTimeout(renderRadar, 300);
+}
+
+async function renderRadar() {
+  if (!fw || !mermaidApi) return;
+  const groups = fw.order.filter(id => fw.nodes[id].level === 2);
+  if (!groups.length) return;
+  const vals = groups.map(g => summarize(leavesUnder(g)));
+  const cov = vals.map(v => round1(v.completeness / 10));
+  const conf = vals.map(v => round1(v.confidence / 10));
+  const res = vals.map(v => round1(v.residual));
+  // Colors: completeness green (cScale0), confidence yellow (cScale1), residual risk red (cScale2)
+  const code = `---
+config:
+  themeVariables:
+    cScale0: "#17703a"
+    cScale1: "#c9a227"
+    cScale2: "#b42318"
+---
+radar-beta
+  axis ${groups.map((g, i) => `a${i}["${g}"]`).join(', ')}
+  curve c1["Completeness"]{${cov.join(', ')}}
+  curve c2["Confidence"]{${conf.join(', ')}}
+  curve c3["Residual risk"]{${res.join(', ')}}
+  max 10
+  min 0
+  ticks 5
+`;
+  try {
+    const { svg } = await mermaidApi.render('radar' + (++radarSeq), code);
+    $('radar').innerHTML = svg;
+  } catch (e) { console.error(e); $('radar').textContent = 'The radar could not be drawn.'; }
+}
+
+// ── Manual answers ────────────────────────────────────────────────────────────
+function openAnswer(id) {
+  editing = id;
+  const n = fw.nodes[id];
+  $('ans-id').textContent = pathOf(id);
+  $('ans-q').textContent = n.vraag;
+  $('ans-hint').textContent = n.doorvraag ? 'Hint: ' + n.doorvraag : '';
+  $('ans-text').value = S.answers[id]?.value || '';
+  $('answer').showModal();
+  $('ans-text').focus();
+}
+
+function saveAnswer(id, text) {
+  const v = text.trim();
+  if (v) { S.answers[id] = { value: v, source: 'manual', updated_at: now() }; markDirty(id); }
+  else { delete S.answers[id]; delete S.assessments[id]; }
+  $('answer').close();
+  save();
+  renderAll();
+  if (v && LLM.kind) enqueueAssess([id]);
+}
+
+// ── JSON export / import ──────────────────────────────────────────────────────
+function download(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function exportJSON() {
+  const doc = {
+    format: FORMAT,
+    format_version: '1.0.0',
+    framework: { name: 'Willen-Mag-Kan', version: '2', checksum: S.checksum, questions: S.rows },
+    initiative: { name: S.initiative.name, description: S.initiative.description, created_at: S.initiative.created_at || now(), updated_at: now() },
+    conversation: { messages: S.chat, summary: '' },
+    answers: S.answers,
+    assessments: S.assessments,
+    settings: { backend: LLM.kind || S.settings.backend, model_id: LLM.model || S.settings.model, language: 'auto' },
+  };
+  download(new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }),
+    `usecase-assessment-${now().slice(0, 10)}.json`);
+}
+
+async function importJSON(file) {
+  let doc;
+  try { doc = JSON.parse(await file.text()); } catch { return toast('This file is not valid JSON.'); }
+  if (doc.format !== FORMAT || !Array.isArray(doc.framework?.questions)) return toast('This is not an assessment export from this app.');
+  if (!confirm('Replace the current assessment with the one in this file?')) return;
+  const built = buildFramework(doc.framework.questions);
+  if (built.errors.length) return toast('The framework in this file is invalid: ' + built.errors[0]);
+  const checksum = await sha256(JSON.stringify(doc.framework.questions));
+  if (doc.framework.checksum && checksum && doc.framework.checksum !== checksum) toast('Warning: the framework checksum does not match; questions may have been edited.');
+  fw = built;
+  S.rows = doc.framework.questions;
+  S.checksum = checksum;
+  S.answers = doc.answers || {};
+  S.assessments = doc.assessments || {};
+  S.chat = (doc.conversation?.messages || []).filter(m => m && m.text).map(m => ({ role: m.role === 'user' ? 'user' : 'bot', text: String(m.text), recorded: m.recorded || [] }));
+  S.initiative = { ...S.initiative, ...(doc.initiative || {}) };
+  S.selected = 'ALL';
+  $('initiative').value = S.initiative.name || '';
+  save();
+  renderTree();
+  renderChat();
+  renderAll();
+  toast('Assessment restored from file.');
+}
+
+// ── Model setup ───────────────────────────────────────────────────────────────
+function openSetup() { $('setup').showModal(); }
+
+function connected() {
+  S.settings = { backend: LLM.kind, url: LLM.url, model: LLM.model };
+  save();
+  renderAll();
+}
+
+function setGpuText(t) { $('gpu-text').textContent = t; }
+
+// ── Events ────────────────────────────────────────────────────────────────────
+function bindEvents() {
+  $('btn-model').onclick = openSetup;
+  $('btn-csv').onclick = () => $('file-csv').click();
+  $('file-csv').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importCSV(f); };
+  $('btn-export').onclick = exportJSON;
+  $('btn-import').onclick = () => $('file-json').click();
+  $('file-json').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importJSON(f); };
+  $('initiative').value = S.initiative.name || '';
+  $('initiative').oninput = e => { S.initiative.name = e.target.value; save(); };
+
+  $('sel-all').onclick = () => select('ALL');
+  $('tree').onclick = e => {
+    const g = e.target.closest('g.node');
+    const m = g && /flowchart-(n\d+)-/.exec(g.id);
+    const id = m && treeIdByKey.get(m[1]);
+    if (id) select(id);
+  };
+  $('branch-list').onclick = e => {
+    const b = e.target.closest('button[data-act]');
+    if (!b) return;
+    const id = b.closest('li').dataset.id;
+    if (b.dataset.act === 'answer') openAnswer(id);
+    else enqueueAssess([id]);
+  };
+  $('assess-branch').onclick = () => enqueueAssess(leavesUnder(S.selected).filter(id => S.assessments[id]?.status !== 'clean'));
+  $('assess-stop').onclick = () => {
+    S.epoch++;
+    queue.length = 0;
+    toast('Stopping after the current step.');
+    save();
+    renderAll();
+  };
+
+  $('chat-form').onsubmit = e => {
+    e.preventDefault();
+    const t = $('chat-input').value.trim();
+    if (!t || busy) return;
+    $('chat-input').value = '';
+    busy = true;
+    $('chat-send').disabled = true;
+    sendChat(t).finally(() => { busy = false; $('chat-send').disabled = false; });
+  };
+  $('chat-input').onkeydown = e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('chat-form').requestSubmit(); }
+  };
+
+  $('ans-save').onclick = () => saveAnswer(editing, $('ans-text').value);
+  $('ans-clear').onclick = () => saveAnswer(editing, '');
+
+  document.querySelectorAll('input[name=backend]').forEach(r => r.addEventListener('change', () => {
+    const api = document.querySelector('input[name=backend]:checked').value === 'api';
+    $('pane-api').hidden = !api;
+    $('pane-webgpu').hidden = api;
+  }));
+  $('btn-load-gpu').onclick = async () => {
+    const btn = $('btn-load-gpu');
+    btn.disabled = true;
+    $('gpu-progress').hidden = false;
+    setGpuText('Loading model, this can take a while the first time…');
+    try {
+      await connectWebGPU((pct, file) => {
+        $('gpu-progress').value = pct;
+        setGpuText(`Downloading ${file || 'model'} … ${Math.round(pct)}%`);
+      });
+      connected();
+      $('setup').close();
+    } catch (e) { setGpuText('Could not load the model: ' + e.message); }
+    finally { btn.disabled = false; }
+  };
+  $('btn-find').onclick = async () => {
+    const url = $('api-url').value.replace(/\/+$/, '');
+    try {
+      const models = await listModels(url);
+      $('api-model').innerHTML = models.map(m => `<option>${esc(m)}</option>`).join('');
+      $('btn-use-api').disabled = !models.length;
+    } catch { toast('Could not reach ' + url + '. Is the server running with CORS enabled?'); }
+  };
+  $('btn-use-api').onclick = () => {
+    Object.assign(LLM, { kind: 'api', url: $('api-url').value.replace(/\/+$/, ''), model: $('api-model').value, pipe: null });
+    connected();
+    $('setup').close();
+  };
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => { t.hidden = true; }, 4500);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  restore();
+  for (const id of Object.keys(S.assessments)) {
+    if (S.assessments[id].status === 'assessing') S.assessments[id].status = 'dirty';
+  }
+  bindEvents();
+  renderChat();
+  renderChatScope();
+  await loadMermaid();
+
+  if (S.rows.length) {
+    fw = buildFramework(S.rows);
+    renderTree();
+    renderAll();
+  } else {
+    try {
+      const res = await fetch(DEFAULT_CSV);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await applyFramework(parseCSV(await res.text()).rows, 'Default framework');
+    } catch (e) { toast('Could not load the default framework: ' + e.message); }
+  }
+
+  if (S.settings.backend === 'api' && S.settings.url) {
+    try {
+      const models = await listModels(S.settings.url);
+      if (models.includes(S.settings.model)) {
+        Object.assign(LLM, { kind: 'api', url: S.settings.url, model: S.settings.model });
+      }
+    } catch { /* server not running; user reconnects from the Model button */ }
+    renderAll();
+  } else if (!S.settings.backend) {
+    openSetup();
+  }
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>
